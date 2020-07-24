@@ -12,6 +12,8 @@ import im.delight.android.ddp.ResultListener
 import im.delight.android.ddp.SubscribeListener
 import java.lang.Exception
 import java.lang.IllegalArgumentException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainViewModel(val meteor: Meteor, val preferences: SharedPreferences) : ViewModel(), MeteorCallback {
     private val gson = GsonBuilder().create()
@@ -86,6 +88,24 @@ class MainViewModel(val meteor: Meteor, val preferences: SharedPreferences) : Vi
 
     fun sendMessage(chatId: String, message: String) {
         meteor.call("addMessage", arrayOf("text", chatId, message), object: ResultListener {
+            override fun onSuccess(result: String?) {
+                Log.d("MainViewModel", result)
+            }
+
+            override fun onError(e: String?, reason: String?, details: String?) {
+                error.value = IllegalArgumentException("$e: $reason")
+            }
+        })
+    }
+
+    fun createGroup(title: String, users: List<String>) {
+        val group = mapOf(
+            "title" to title,
+            "userId" to user.value?.id,
+            "users" to users,
+            "dateCreated" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(Date())
+        )
+        meteor.call("groups.insert", arrayOf(gson.toJson(group)), object: ResultListener {
             override fun onSuccess(result: String?) {
                 Log.d("MainViewModel", result)
             }

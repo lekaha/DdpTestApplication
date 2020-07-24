@@ -51,7 +51,10 @@ class MainFragment : Fragment() {
 
         viewModel.isLoggedIn.observe(this, Observer {
             message.text = if (it) "logged in with ${viewModel.user.value?.id}" else "Not logged in"
-            if (it) startChatButton.isEnabled = true
+            if (it) {
+                startChatButton.isEnabled = true
+                createGroupButton.isEnabled = true
+            }
         })
 
         viewModel.isChat.observe(this, Observer {
@@ -66,7 +69,7 @@ class MainFragment : Fragment() {
         viewModel.connect()
 
         loginButton.setOnClickListener {
-            viewModel.login("test@rice.com", "123456")
+            viewModel.login("test@test.com", "123456")
         }
 
         startChatButton.setOnClickListener {
@@ -75,6 +78,12 @@ class MainFragment : Fragment() {
 
         sendMessageButton.setOnClickListener {
             viewModel.sendMessage("CpgFZFDBaPk9tkbQA", "test")
+        }
+
+        createGroupButton.setOnClickListener {
+            viewModel.createGroup("Test Group", listOf(
+                "dTsuuQZimJtBnK7cN"
+            ))
         }
     }
 
