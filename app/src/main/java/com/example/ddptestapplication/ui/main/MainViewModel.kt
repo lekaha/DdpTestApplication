@@ -2,6 +2,7 @@ package com.example.ddptestapplication.ui.main
 
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.gson.GsonBuilder
@@ -26,14 +27,38 @@ class MainViewModel(val meteor: Meteor, val preferences: SharedPreferences) : Vi
         }
     }
 
+    private val chatsSubscribeListener = object: SubscribeListener {
+        override fun onSuccess() {
+            Log.d("MainViewModel", "chatsSubscribeListener onSuccess")
+        }
+
+        override fun onError(error: String?, reason: String?, details: String?) {
+            Log.d("MainViewModel", "chatsSubscribeListener onError")
+        }
+    }
+
     val connected: MutableLiveData<Boolean> = MutableLiveData(false)
     val isLoggedIn: MutableLiveData<Boolean> = MutableLiveData(false)
     val isChat: MutableLiveData<Boolean> = MutableLiveData(false)
     val user: MutableLiveData<User> = MutableLiveData()
     val error: MutableLiveData<Exception> = MutableLiveData()
+    val liveDataMerger = MediatorLiveData<Unit>()
+
+    private val subscriptionIds = mutableListOf<String>()
 
     init {
         meteor.addCallback(this)
+    }
+
+    private fun subscribe() {
+        val chatsSubscriptionId = meteor.subscribe("chats", arrayOf(), chatsSubscribeListener)
+        subscriptionIds.clear()
+        subscriptionIds.add(chatsSubscriptionId)
+    }
+
+    private fun unsubscribe() {
+        subscriptionIds.forEach(meteor::unsubscribe)
+        subscriptionIds.clear()
     }
 
     fun connect() {
@@ -87,6 +112,16 @@ class MainViewModel(val meteor: Meteor, val preferences: SharedPreferences) : Vi
                 isLoggedIn.value = false
             }
         })
+
+        liveDataMerger.addSource(isLoggedIn) {
+            it?.let { isLoggedIn ->
+                if (isLoggedIn) {
+                    subscribe()
+                } else {
+                    unsubscribe()
+                }
+            }
+        }
     }
 
     override fun onConnect(signedInAutomatically: Boolean) {

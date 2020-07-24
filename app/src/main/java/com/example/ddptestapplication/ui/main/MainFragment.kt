@@ -27,6 +27,7 @@ class MainFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Meteor.setLoggingEnabled(true)
         return inflater.inflate(R.layout.main_fragment, container, false)
     }
 
@@ -34,7 +35,7 @@ class MainFragment : Fragment() {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProviders.of(
             this,
-            MainViewModelFactory(requireActivity(), "ws://192.168.1.1/websocket")
+            MainViewModelFactory(requireActivity(), getString(R.string.websocket_url))
         ).get(MainViewModel::class.java)
 
         viewModel.connected.observe(this, Observer {
@@ -42,6 +43,10 @@ class MainFragment : Fragment() {
             if (it) {
                 loginButton.isEnabled = true
             }
+        })
+
+        viewModel.liveDataMerger.observe(this, Observer {
+
         })
 
         viewModel.isLoggedIn.observe(this, Observer {
